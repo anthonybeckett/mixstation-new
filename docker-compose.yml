@@ -1,0 +1,55 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: src/MixStation.Api/Dockerfile
+    ports:
+      - "5000:5231"
+      #- "5001:8081"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+      ConnectionStrings__Default: ${DB_CONNECTION_STRING}
+    depends_on:
+      - db
+    networks:
+      - default
+
+  db:
+    image: postgres:17.5-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - default
+    
+  frontend:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    
+#  frontend:
+#    build:
+#      context: ./frontend
+#    ports:
+#      - "5173:80"
+#    depends_on:
+#      - api
+
+volumes:
+  pgdata:
+    
+networks:
+  default:
+    driver: bridge
